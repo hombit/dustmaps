@@ -137,8 +137,10 @@ When querying a 3D dust map, there are two slight complications:
 2. Many 3D dust maps are probabilistic, so we need to specify whether we want
    the median reddening, mean reddening, a random sample of the reddening, etc.
 
-Let's see how this works out with the "Bayestar" dust map of
-`Green, Schlafly & Finkbeiner (2015) <http://argonaut.skymaps.info>`_.
+Let's see how this works out with the "Bayestar" 2019 3D dust map of
+`Green et al. (2019) <https://ui.adsabs.harvard.edu/abs/2019ApJ...887...93G/abstract>`_. The DECaPS 3D dust map from 
+`Zucker, Saydjari, and Speagle et al. (2025) <https://ui.adsabs.harvard.edu/abs/2025arXiv250302657Z/abstract>`_
+(complementing Bayestar in the southern Galactic plane) can be queried in a similar manner, with a few key differences outlined later on in the examples. 
 
 How Distances are Handled
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -146,50 +148,84 @@ How Distances are Handled
 If we don't provide distances in our input, :code:`dustmaps` will assume we want dust
 reddening along the entire line of sight.
 
-.. code-block :: python
-    
+.. code-block:: python
+
     from __future__ import print_function
     from astropy.coordinates import SkyCoord
     from dustmaps.bayestar import BayestarQuery
-    
+
     coords = SkyCoord(180., 0., unit='deg', frame='galactic')
     
-    # Note that below, we could use version='bayestar2017' to get the newer
-    # version of the map. Note, however, that the reddening units are not
-    # identical in the two versions of the map. See Green et al. (2018) for
-    # an explanation of the units.
-    bayestar = BayestarQuery(max_samples=2, version='bayestar2015')
-    
-    ebv = bayestar(coords, mode='random_sample')
-    
-    print(ebv)
-    >>> [ 0.00476     0.00616     0.0073      0.00773     0.00796     0.07453
-          0.07473     0.0748      0.07807     0.07831     0.18957999  0.2013
-          0.20448001  0.20734     0.21008     0.73733997  0.75415999  0.93702
-          0.93956     1.09001005  1.09141004  1.11407995  1.11925006  1.12212002
-          1.12284994  1.12289     1.12296999  1.12305999  1.12308002  1.12309003
-          1.12311995]
+    bayestar = BayestarQuery(max_samples=2, version='bayestar2019')
+
+    E = bayestar(coords, mode='random_sample')
+
+    print(E)
+    >>> [0.         0.         0.         0.         0.         0.
+         0.         0.         0.         0.         0.         0.
+         0.         0.         0.         0.         0.         0.04
+         0.04       0.04       0.04       0.04       0.04       0.04
+         0.04       0.05       0.05       0.05       0.07       0.09
+         0.09       0.09       0.09999999 0.09999999 0.09999999 0.11
+         0.11       0.11       0.11       0.12       0.12       0.12
+         0.12       0.12       0.14       0.14       0.16       0.17999999
+         0.19       0.19999999 0.21       0.21       0.22       0.22999999
+         0.22999999 0.26999998 0.26999998 0.57       0.59       0.59
+         0.59       0.68       0.69       0.7        0.71       0.77
+         0.78       0.81       0.82       0.82       0.83       0.85999995
+         0.87       0.98999995 0.98999995 1.02       1.02       1.03
+         1.09       1.11       1.11       1.11       1.11       1.11
+         1.11       1.11       1.11       1.11       1.11       1.11
+         1.11       1.11       1.11       1.11       1.11       1.11
+         1.12       1.12       1.12       1.12       1.12       1.12
+         1.12       1.12       1.12       1.12       1.12       1.12
+         1.12       1.12       1.12       1.12       1.12       1.12
+         1.12       1.12       1.12       1.12       1.12       1.12]
 
 Here, the Bayestar map has given us a single random sample of the cumulative
 dust reddening *along the entire line of sight* -- that is, to a set of
 distances. To see what those distances are, we can call:
 
-.. code-block :: python
-    
+.. code-block:: python
+
     bayestar.distances
-    >>> <Quantity [  0.06309573,  0.07943282,  0.1       ,  0.12589255,
-                     0.15848933,  0.19952621,  0.25118864,  0.31622776,
-                     0.3981072 ,  0.50118726,  0.63095725,  0.79432821,
-                     1.        ,  1.2589252 ,  1.58489335,  1.99526215,
-                     2.51188707,  3.1622777 ,  3.98107076,  5.01187277,
-                     6.3095727 ,  7.94328403, 10.        , 12.58925152,
-                    15.84893322, 19.95262146, 25.11886978, 31.62277603,
-                    39.81070709, 50.11872864, 63.09572601] kpc>
+    >>> <Quantity [ 0.06309573,  0.06683439,  0.07079458,  0.07498942,
+                    0.07943282,  0.08413951,  0.08912509,  0.09440609,
+                    0.1       ,  0.10592537,  0.11220185,  0.11885022,
+                    0.12589254,  0.13335214,  0.14125375,  0.14962357,
+                    0.15848932,  0.1678804 ,  0.17782794,  0.18836491,
+                    0.19952623,  0.2113489 ,  0.22387211,  0.23713737,
+                    0.25118864,  0.26607251,  0.28183829,  0.29853826,
+                    0.31622777,  0.33496544,  0.35481339,  0.3758374 ,
+                    0.39810717,  0.4216965 ,  0.44668359,  0.47315126,
+                    0.50118723,  0.53088444,  0.56234133,  0.59566214,
+                    0.63095734,  0.66834392,  0.70794578,  0.74989421,
+                    0.79432823,  0.84139514,  0.89125094,  0.94406088,
+                    1.        ,  1.05925373,  1.12201845,  1.18850223,
+                    1.25892541,  1.33352143,  1.41253754,  1.49623566,
+                    1.58489319,  1.67880402,  1.77827941,  1.88364909,
+                    1.99526231,  2.11348904,  2.23872114,  2.37137371,
+                    2.51188643,  2.66072506,  2.81838293,  2.98538262,
+                    3.16227766,  3.34965439,  3.54813389,  3.75837404,
+                    3.98107171,  4.21696503,  4.46683592,  4.73151259,
+                    5.01187234,  5.30884444,  5.62341325,  5.95662144,
+                    6.30957344,  6.68343918,  7.07945784,  7.49894209,
+                    7.94328235,  8.41395142,  8.91250938,  9.44060876,
+                   10.        , 10.59253725, 11.22018454, 11.88502227,
+                   12.58925412, 13.33521432, 14.12537545, 14.96235656,
+                   15.84893192, 16.78804018, 17.7827941 , 18.83649089,
+                   19.95262315, 21.1348904 , 22.38721139, 23.71373706,
+                   25.11886432, 26.6072506 , 28.18382931, 29.85382619,
+                   31.6227766 , 33.49654392, 35.48133892, 37.58374043,
+                   39.81071706, 42.16965034, 44.66835922, 47.3151259 ,
+                   50.11872336, 53.08844442, 56.23413252, 59.56621435] kpc>
+
+
 
 The return type is an `astropy.unit.Quantity <http://astropy.readthedocs.io/en/stable/api/astropy.units.Quantity.html>`_
 instance, which keeps track of units.
 
-If we provide Bayestar with distances, then it will do the distance
+If we provide Bayestar or DECaPS with distances, then it will do the distance
 interpolation for us, returning the cumulative dust reddening out to specific
 distances:
 
@@ -199,10 +235,10 @@ distances:
     
     coords = SkyCoord(180.*units.deg, 0.*units.deg,
                       distance=500.*units.pc, frame='galactic')
-    ebv = bayestar(coords, mode='median')
+    E = bayestar(coords, mode='median')
     
-    print(ebv)
-    >>> 0.10705789
+    print(E)
+    >>> 0.105
 
 Because we have explicitly told Bayestar what distance to evaluate the map at,
 it returns only a single value.
@@ -211,7 +247,7 @@ it returns only a single value.
 How Probability is Handled
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The Bayestar 3D dust map is probabilistic, meaning that it stores random samples
+The Bayestar and DECaPS 3D dust maps are probabilistic, meaning that they store random samples
 of how dust reddening could increase along each sightline. Sometimes we might be
 interested in the median reddening to a given point in space, or we might want
 to have all the samples of reddening out to that point. We specify how we want
@@ -220,43 +256,45 @@ argument :code:`mode` to :code:`dustmaps.bayestar.BayestarQuery.__call__`.
 
 For example, if we want all the reddening samples, we invoke:
 
-.. code-block :: python
-    
+.. code-block:: python
+
     l = np.array([30.,  60., 90.]) * units.deg
     b = np.array([10., -10., 15.]) * units.deg
     d = np.array([1.5,  0.3, 4.0]) * units.kpc
-    
+
     coords = SkyCoord(l, b, distance=d, frame='galactic')
-    
-    ebv = bayestar(coords, mode='samples')
-    
-    print(ebv.shape) # (# of coordinates, # of samples)
+
+    E = bayestar(coords, mode='samples')
+
+    print(E.shape)  # (# of coordinates, # of samples)
     >>> (3, 2)
-    
-    print(ebv)
-    >>> [[ 0.24641787  0.27142054]    # Two samples at the first coordinate
-         [ 0.01696703  0.0149225 ]    # Two samples at the second coordinate
-         [ 0.08348     0.11068   ]]   # Two samples at the third coordinate
+
+    print(E)
+    >>> [[0.26999998 0.29999998]  # Two samples at the first coordinate
+    ...  [0.         0.01      ]  # Two samples at the second coordinate
+    ...  [0.09999999 0.08      ]] # Two samples at the third coordinate
+
 
 If we instead ask for the mean reddening, the shape of the output is different:
 
-.. code-block :: python
-    
-    ebv = bayestar(coords, mode='mean')
-    
-    print(ebv.shape) # (# of coordinates)
+.. code-block:: python
+
+    E = bayestar(coords, mode='mean')
+
+    print(E.shape)  # (# of coordinates)
     >>> (3,)
-    
-    print(ebv)
-    >>> [ 0.25891921  0.09121627  0.09708   ]
+
+    print(E)
+    >>> [0.28499997 0.005      0.09      ]
+
 
 The only axis is for the different coordinates, because we have reduced the
 samples axis by taking the mean.
 
-In general, the shape of the output from the Bayestar map is:
+In general, the shape of the output from the Bayestar and DECaPS maps is:
 
-.. code-block :: python
-    
+.. code-block:: python
+
     (coordinate, distance, sample)
 
 where any of the axes can be missing (e.g., if only one coordinate was
@@ -264,77 +302,149 @@ specified, if distances were provided, or if the median reddening was
 requested).
 
 Percentiles are handled in much the same way as samples. In the following
-query, we request the 16th, 50th and 84th percentiles of reddening at each
+query, we request the 16th, 50th, and 84th percentiles of reddening at each
 coordinate, using the same coordinates as we generated in the previous example:
 
-.. code-block :: python
-    
-    ebv = bayestar(coords, mode='percentile', pct=[16., 50., 84.])
-    
-    print(ebv)
-    >>> [[ 0.24789949  0.25583497  0.26986977]  # Percentiles at 1st coordinate
-         [ 0.01505572  0.01814967  0.02750403]  # Percentiles at 2nd coordinate
-         [ 0.0860716   0.09787634  0.10787529]] # Percentiles at 3rd coordinate
+.. code-block:: python
+
+    E = bayestar(coords, mode='percentile', pct=[16., 50., 84.])
+
+    print(E)
+    >>> [[0.27479998  0.28499998  0.29519998]  # Percentiles at 1st coordinate
+         [0.0016      0.005       0.0084    ]  # Percentiles at 2nd coordinate
+         [0.0832      0.09        0.09679999]] # Percentiles at 3rd coordinate
+
 
 We can also pass a single percentile:
 
-.. code-block :: python
-    
-    ebv = bayestar(coords, mode='percentile', pct=25.)
-    
-    print(ebv)
-    >>> [ 0.24930404  0.01524667  0.08961   ] # 25th percentile at 3 coordinates
+.. code-block:: python
+
+    E = bayestar(coords, mode='percentile', pct=25.)
+
+    print(E)
+    >>> [0.27749997  0.0025      0.08499999]  # 25th percentile at 3 coordinates
 
 
-Getting Quality Assurance Flags from the Bayestar Dust Maps
+Getting Quality Assurance Flags from the Bayestar and DECaPS Dust Maps
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For the Bayestar dust maps, one can retrieve QA flags by providing the keyword
+For the Bayestar and DECaPS dust maps, one can retrieve QA flags by providing the keyword
 argument :code:`return_flags=True`:
 
-.. code-block :: python
-    
-    ebv, flags = bayestar(coords, mode='median', return_flags=True)
-    
+.. code-block:: python
+
+    E, flags = bayestar(coords, mode='median', return_flags=True)
+
     print(flags.dtype)
     >>> [('converged', '?'), ('reliable_dist', '?')]
-    
-    print(flags['converged']) # Whether or not fit converged in each pixel
+
+    print(flags['converged'])  # Whether or not fit converged in each pixel
     >>> [ True  True  True]
-    
+
     # Whether or not map is reliable at requested distances
     print(flags['reliable_dist'])
     >>> [ True False  True]
 
+DECaPS shares the same quality flags as Bayestar, but includes one additional flag, called
+"infilled", which indicates whether the pixel needed to be infilled due to an insufficient
+number of stars:
+
+.. code-block:: python
+
+    >>> [('converged', '?'), ('infilled', '?'), ('reliable_dist', '?')]
+
 If the coordinates do not include distances, then instead of
-:code:`'reliable_dist'`, the query will return the minimum and maxmimum reliable
+:code:`'reliable_dist'`, the query will return the minimum and maximum reliable
 distance moduli of the map in each requested coordinate:
 
-.. code-block :: python
-    
+.. code-block:: python
+
     l = np.array([30.,  60., 90.]) * units.deg
     b = np.array([10., -10., 15.]) * units.deg
-    
+
     coords = SkyCoord(l, b, frame='galactic')
-    
-    ebv, flags = bayestar(coords, mode='median', return_flags=True)
-    
+
+    E, flags = bayestar(coords, mode='median', return_flags=True)
+
     print(flags['min_reliable_distmod'])
-    >>> [ 7.875       8.24800014  6.87300014]
-    
+    >>> [ 7.5968404  7.9513497  6.7628193]
+
     print(flags['max_reliable_distmod'])
-    >>> [ 15.18599987  15.25500011  15.00699997]
+    >>> [14.584786 14.536094 14.613377]
+
 
 We can see from the above that in the previous example, the reason the second
 coordinate was labeled unreliable was because the requested distance (300 pc)
-was closer than a distance modulus of 8.248 (corresponding to ~450 pc).
+was closer than a distance modulus of 7.95 (corresponding to ~389 pc).
+
+Combining the Bayestar and DECaPS 3D Dust Maps
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The DECaPS map can largely be queried in a similar manner to the Bayestar map. However, due to the increased angular resolution of the DECaPS map (approximately 1′), the size of the data products is significantly larger. To accommodate users with limited storage, the :code:`dustmaps` package provides a few additional options.
+
+First, users may choose to download only the *mean* map (~8 GB), which is significantly smaller than the full dataset containing both the mean and samples (~33 GB). If only the mean map is downloaded, an additional argument must be specified (``mean_only=True``) that precludes querying in any other mode (e.g. random sample, etc. )
+
+.. code-block:: python
+
+    from dustmaps.decaps import DECaPSQuery
+    decaps = DECaPSQuery(mean_only=True)
+
+By default, the `DECaPSQuery` class loads the full map into memory. For lightweight usage, :code:`dustmaps` also provides `DECaPSQueryLite`, which uses memory mapping to avoid loading the full dataset into RAM. This is ideal for small queries:
+
+.. code-block:: python
+
+    from dustmaps.decaps import DECaPSQueryLite
+    decapslite = DECaPSQueryLite()
+
+To combine the Bayestar and DECaPS 3D dust maps, users should query Bayestar for regions **north of declination −30°**, and DECaPS for regions **south of declination −30°**, taking advantage of each map’s sky coverage. For example, we can generate a few dozen random coordinates in the Galactic plane, filter them by declination, and query the appropriate map based on each coordinate’s position:
+
+.. code-block:: python
+
+    import numpy as np
+    from astropy.coordinates import SkyCoord
+    from astropy import units
+
+    # Generate random coordinates in the plane
+    n_coords = 50
+    l = np.random.uniform(0, 360, n_coords)
+    b = np.random.uniform(-10, 10, n_coords)
+
+    gal_coords = SkyCoord(l=l*units.deg, b=b*units.deg, distance=3*units.kpc, frame='galactic')
+
+    # Filter based on declination
+    mask_north = gal_coords.icrs.dec.deg > -30
+    mask_south = gal_coords.icrs.dec.deg <= -30
+
+    # Query both maps
+    ebv_bs = 0.883 * bayestar(gal_coords[mask_north], mode='random_sample')
+    ebv_decaps = decapslite(gal_coords[mask_south], mode='random_sample')
+
+    # Compile reddening results
+    ebv_compiled = np.empty((n_coords))
+    ebv_compiled[mask_north] = ebv_bs
+    ebv_compiled[mask_south] = ebv_decaps
+
+    print(ebv_compiled)
+    >>> [0.66225004 1.43870151 0.37085998 0.48639923 0.99045843 0.44150001
+     0.16003418 0.45948145 0.21081543 0.2649     0.10596    0.18994141
+     0.36010742 0.32671002 0.44150001 1.25460923 0.70639998 1.26343918
+     0.57394999 0.04415    0.83002001 1.64257812 0.53054923 0.27373001
+     1.28992915 0.09713    0.32671002 0.81385845 0.32671002 0.21191999
+     0.58278    1.52246094 0.49597847 0.26564923 0.83885002 2.88815928
+     0.22075    1.46191406 0.12362    0.93672919 0.2767269  0.89332843
+     0.52096999 0.16003418 0.88449842 0.13171387 0.49448001 0.25
+     0.24724001 2.921875  ]
 
 
+		
+The DECaPS map reports reddening directly in units of E(B−V), while the Bayestar19 map uses arbitrary units. To convert Bayestar19 to E(B−V), we use the relation E(B−V) = 0.883 × E_Bayestar19. This conversion factor is based on Equation 30 from `Green et al. (2019) <https://ui.adsabs.harvard.edu/abs/2019ApJ...887...93G/abstract>`_, which gives E(g−r) = 0.901 × E_Bayestar19, combined with the relation E(B−V) = 0.98 × E(g−r) from `Schlafly & Finkbeiner (2011) <http://iopscience.iop.org/0004-637X/737/2/103/article#apj398709t6>`_.
+
+	
 Plotting the Dust Maps
 ----------------------
 
-We'll finish by plotting a comparison of the SFD, Planck Collaboration and
-Bayestar Dust maps. First, we'll import the necessary modules:
+We'll finish by plotting a comparison of the SFD, Planck Collaboration,
+Bayestar, and DECaPS dust maps. First, we'll import the necessary modules:
 
 .. code-block :: python
     
@@ -350,50 +460,56 @@ Bayestar Dust maps. First, we'll import the necessary modules:
     from dustmaps.sfd import SFDQuery
     from dustmaps.planck import PlanckQuery
     from dustmaps.bayestar import BayestarQuery
+    from dustmaps.decaps import DECaPSQuery
 
-Next, we'll set up a grid of coordinates to plot, centered on the Aquila South
-cloud:
+
+Next, we'll set up a grid of coordinates to plot, centered on a small region of the sky toward the Pipe Nebula, where the Bayestar and DECaPS dust maps have overlapping coverage (near declination = -30°):
+
+.. code-block :: python
+
+	l0, b0 = (3, 5)
+	l = np.arange(l0 - 2., l0 + 2., 0.01)
+	b = np.arange(b0 - 2., b0 + 2., 0.01)
+	l, b = np.meshgrid(l, b)
+	coords = SkyCoord(l*units.deg, b*units.deg,distance=5*units.kpc,frame='galactic')
+
+
+Then, we'll load up and query four different dust maps:
 
 .. code-block :: python
     
-    l0, b0 = (37., -16.)
-    l = np.arange(l0 - 5., l0 + 5., 0.05)
-    b = np.arange(b0 - 5., b0 + 5., 0.05)
-    l, b = np.meshgrid(l, b)
-    coords = SkyCoord(l*units.deg, b*units.deg,
-                      distance=1.*units.kpc, frame='galactic')
-
-Then, we'll load up and query three different dust maps:
-
-.. code-block :: python
-    
-    sfd = SFDQuery()
-    Av_sfd = 2.742 * sfd(coords)
-    
-    planck = PlanckQuery()
-    Av_planck = 3.1 * planck(coords)
-    
-    bayestar = BayestarQuery(max_samples=1)
-    Av_bayestar = 2.742 * bayestar(coords)
+	sfd = SFDQuery()
+	Av_sfd = 2.74 * sfd(coords)
+	
+	planck = PlanckQuery()
+	Av_planck = 3.1 * planck(coords)
+	
+	bayestar = BayestarQuery()
+	Av_bayestar = 2.74 * bayestar(coords, mode='mean')
+	
+	decaps = DECaPSQuery(mean_only=True)
+	Av_decaps = 3.32 * decaps(coords, mode='mean')
 
 We've assumed :math:`R_V = 3.1`, and used the coefficient from
 `Table 6 of Schlafly & Finkbeiner (2011) <http://iopscience.iop.org/0004-637X/737/2/103/article#apj398709t6>`_
-to convert SFD and Bayestar reddenings to magnitudes of :math:`A_V`.
+to convert SFD and Bayestar reddenings to magnitudes of :math:`A_V`. We assumed :math:`R_V = 3.32` from
+`Schlafly et al. (2016) <https://ui.adsabs.harvard.edu/abs/2016ApJ...821...78S/abstract>`_ to convert DECaPS.
 
 Finally, we create the figure using :code:`matplotlib`:
 
 .. code-block :: python
-    
-    fig = plt.figure(figsize=(12,4), dpi=150)
-    
+
+    fig = plt.figure(figsize=(16,4), dpi=150)
+
     for k,(Av,title) in enumerate([(Av_sfd, 'SFD'),
                                    (Av_planck, 'Planck'),
-                                   (Av_bayestar, 'Bayestar')]):
-        ax = fig.add_subplot(1,3,k+1)
+                                   (Av_bayestar, 'Bayestar19'),
+                                   (Av_decaps,'DECaPS')]):
+        ax = fig.add_subplot(1,4,k+1)
         ax.imshow(
-            np.sqrt(Av)[::,::-1],
+            Av[:, ::-1],
             vmin=0.,
-            vmax=2.,
+            vmax=10,
             origin='lower',
             interpolation='nearest',
             cmap='binary',
@@ -401,9 +517,10 @@ Finally, we create the figure using :code:`matplotlib`:
         )
         ax.axis('off')
         ax.set_title(title)
-    
+
     fig.subplots_adjust(wspace=0., hspace=0.)
-    plt.savefig('comparison.png', dpi=150)
+    plt.savefig('comparison.png', dpi=300)
+
 
 Here's the result:
 

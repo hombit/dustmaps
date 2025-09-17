@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# bayestar.py
+# decaps.py
 # Reads the DECaPS dust reddening maps, described in
 # Zucker, Saydjari, & Speagle et al. 2025.
 #
@@ -103,14 +103,14 @@ class DECaPSQuery(DustMap):
         self._mean_only = mean_only
 
         if self._mean_only:
-            print("You are about to load 7 GB into RAM. If you are not performing intensive queries, consider using the DECaPSQueryLite class.")
+            print("You are about to load 8 GB into RAM. If you are not performing intensive queries, consider using the DECaPSQueryLite class.")
 
             if map_fname is None:
                 map_fname = os.path.join(data_dir(), 'decaps', 'decaps_mean.h5')
             if not os.path.isfile(map_fname):
                 map_fname = os.path.join(data_dir(), 'decaps', 'decaps_mean_and_samples.h5')
         else:
-            print("You are about to load 30 GB into RAM. If you are not performing intensive queries, consider using the DECaPSQueryLite class.")
+            print("You are about to load 33 GB into RAM. If you are not performing intensive queries, consider using the DECaPSQueryLite class.")
 
             if map_fname is None:
                 map_fname = os.path.join(data_dir(), 'decaps', 'decaps_mean_and_samples.h5')
@@ -280,7 +280,7 @@ class DECaPSQuery(DustMap):
 
         Args:
             coords (:obj:`astropy.coordinates.SkyCoord`): The coordinates to query.
-            mode (Optional[:obj:`str`]): Seven different query modes are available:
+            mode (Optional[:obj:`str`]): Six different query modes are available:
                 'random_sample', 'random_sample_per_pix' 'samples', 'median',
                 'mean', and 'percentile'. The :obj:`mode` determines how the
                 output will reflect the probabilistic nature of the DECaPS
@@ -397,8 +397,8 @@ class DECaPSQuery(DustMap):
                 # Return convergence and reliable distance ranges
                 dtype = [('converged', 'bool'),
                 		 ('infilled', 'bool'),
-                         ('min_reliable_distmod', 'f2'),
-                         ('max_reliable_distmod', 'f2')]
+                         ('min_reliable_distmod', 'f4'),
+                         ('max_reliable_distmod', 'f4')]
             flags = np.empty(n_coords_ret, dtype=dtype)
 
 
@@ -702,7 +702,7 @@ class DECaPSQueryLite(DustMap):
 
         Args:
             coords (:obj:`astropy.coordinates.SkyCoord`): The coordinates to query.
-            mode (Optional[:obj:`str`]): Seven different query modes are available:
+            mode (Optional[:obj:`str`]): Six different query modes are available:
                 'random_sample', 'random_sample_per_pix' 'samples', 'median',
                 'mean', and 'percentile'. The :obj:`mode` determines how the
                 output will reflect the probabilistic nature of the DECaPS
@@ -853,8 +853,8 @@ class DECaPSQueryLite(DustMap):
                 # Return convergence and reliable distance ranges
                 dtype = [('converged', 'bool'),
                 		 ('infilled', 'bool'),
-                         ('min_reliable_distmod', 'f2'),
-                         ('max_reliable_distmod', 'f2')]
+                         ('min_reliable_distmod', 'f4'),
+                         ('max_reliable_distmod', 'f4')]
             flags = np.empty(n_coords_ret, dtype=dtype)
 
 
@@ -1058,9 +1058,9 @@ def fetch(mean_only=False, silence_warnings=False, clobber=False):
     Downloads the specified version of the DECaPS dust map.
     
     Args:
-        mean_only (Optional[bool]): If True, only the mean map (7 GB) will be downloaded 
+        mean_only (Optional[bool]): If True, only the mean map (8 GB) will be downloaded 
             and available to query. If False (the default), both the mean and samples
-            will be downloaded (30 GB) and available to query.
+            will be downloaded (33 GB) and available to query.
         silence_warnings (Optional[bool]): If True, suppresses all warnings and proceeds 
             without requiring user confirmation. Defaults to False.
         clobber (Optional[bool]): If True, overwrites any existing files. Defaults to False.
@@ -1081,8 +1081,8 @@ def fetch(mean_only=False, silence_warnings=False, clobber=False):
 
         if not silence_warnings:
             print(
-                "Warning: You are about to download a large file (30 GB), containing the mean map and samples.\n"
-                "If only want to download the mean map file (7 GB), use mean_only=True."
+                "Warning: You are about to download a large file (33 GB), containing the mean map and samples.\n"
+                "If only want to download the mean map file (8 GB), use mean_only=True."
             )
             print("Tip: To suppress this warning and skip confirmation in future runs, use silence_warnings=True.")
             response = input("Do you want to proceed? (Yes/No): ").strip().lower()
@@ -1108,7 +1108,7 @@ def fetch(mean_only=False, silence_warnings=False, clobber=False):
             return
 
         if not silence_warnings:
-            print("Warning: You are about to download a large file (7 GB) containing the mean map.")
+            print("Warning: You are about to download a large file (8 GB) containing the mean map.")
             print("Tip: To suppress this warning and skip confirmation in future runs, use silence_warnings=True.")
             response = input("Do you want to proceed? (Yes/No): ").strip().lower()
             if response != "yes":
