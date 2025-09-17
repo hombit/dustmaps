@@ -168,7 +168,7 @@ inferred from stellar photometry of 709 million stars observed by the DECaPS2 su
 The DECaPS map also makes use of *Gaia* DR3 parallaxes where available. When combined with Bayestar, DECaPS completes the coverage
 of the Galactic plane within a 20°-thick strip, enabling reddening estimates over the entire disk. To combine the two maps for complete plane coverage, query Bayestar north of declination -30° and DECaPS south of declination -30°.
 
-Unlike the Bayestar map, whose reddening is reported in an arbitrary unit, the DECaPS reddening is reported in units of :math:`E(B-V)` (magnitudes). To convert to :math:`A(V)`, assume :math:`R(V) = 3.32`, such that :math:`A(V) = 3.32 x E(B-V)`.
+Unlike the Bayestar map, whose reddening is reported in an arbitrary unit, the DECaPS reddening is reported in units of :math:`E(B-V)` (magnitudes). To convert to :math:`A(V)`, assume :math:`R(V) = 3.32`, such that :math:`A(V) = 3.32 E(B-V)`.
 
 * **References**: `Zucker, Saydjari, Speagle et al. 2025 <https://ui.adsabs.harvard.edu/abs/2025arXiv250302657Z/abstract>`_
 * **Data**: `Dataverse <https://doi.org/10.7910/DVN/J9JCKO>`_
