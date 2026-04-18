@@ -26,7 +26,7 @@ import numpy as np
 import astropy.coordinates as coordinates
 import astropy.units as units
 import h5py
-import healpy as hp
+import astropy_healpix as _ah
 
 from .std_paths import *
 from .map_base import DustMap, WebDustMap, ensure_flat_galactic
@@ -51,23 +51,22 @@ def lb2pix(nside, l, b, nest=True):
         and :obj:`b`.
     """
 
-    theta = np.radians(90. - b)
-    phi = np.radians(l)
+    order = 'nested' if nest else 'ring'
+    hp = _ah.HEALPix(nside=nside, order=order)
 
     if not hasattr(l, '__len__'):
         if (b < -90.) or (b > 90.):
             return -1
-
-        pix_idx = hp.pixelfunc.ang2pix(nside, theta, phi, nest=nest)
-
-        return pix_idx
+        lon = np.atleast_1d(np.float64(l)) * units.deg
+        lat = np.atleast_1d(np.float64(b)) * units.deg
+        return int(hp.lonlat_to_healpix(lon, lat)[0])
 
     idx = (b >= -90.) & (b <= 90.)
-
-    pix_idx = np.empty(l.shape, dtype='i8')
-    pix_idx[idx] = hp.pixelfunc.ang2pix(nside, theta[idx], phi[idx], nest=nest)
-    pix_idx[~idx] = -1
-
+    pix_idx = np.full(l.shape, -1, dtype='i8')
+    if idx.any():
+        lon = np.asarray(l[idx], dtype=np.float64) * units.deg
+        lat = np.asarray(b[idx], dtype=np.float64) * units.deg
+        pix_idx[idx] = hp.lonlat_to_healpix(lon, lat)
     return pix_idx
 
 

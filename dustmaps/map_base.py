@@ -19,7 +19,7 @@
 from __future__ import print_function, division
 
 import numpy as np
-import healpy as hp
+import astropy_healpix as _ah
 import astropy.coordinates as coordinates
 import astropy.units as units
 
@@ -58,24 +58,30 @@ def coord2healpix(coords, frame, nside, nest=True):
     else:
         c = coords
 
+    order = 'nested' if nest else 'ring'
+    hp = _ah.HEALPix(nside=nside, order=order)
+
     if hasattr(c, 'ra'):
-        phi = c.ra.rad
-        theta = 0.5*np.pi - c.dec.rad
-        return hp.pixelfunc.ang2pix(nside, theta, phi, nest=nest)
+        lon = np.atleast_1d(c.ra.deg) * units.deg
+        lat = np.atleast_1d(c.dec.deg) * units.deg
     elif hasattr(c, 'l'):
-        phi = c.l.rad
-        theta = 0.5*np.pi - c.b.rad
-        return hp.pixelfunc.ang2pix(nside, theta, phi, nest=nest)
+        lon = np.atleast_1d(c.l.deg) * units.deg
+        lat = np.atleast_1d(c.b.deg) * units.deg
     elif hasattr(c, 'x'):
-        x,y,z = [v.to('kpc').value for v in (c.x,c.y,c.z)]
-        return hp.pixelfunc.vec2pix(nside, x, y, z, nest=nest)
+        x, y, z = [v.to('kpc').value for v in (c.x, c.y, c.z)]
+        lon = np.atleast_1d(np.degrees(np.arctan2(y, x))) * units.deg
+        lat = np.atleast_1d(np.degrees(np.arctan2(z, np.sqrt(x**2 + y**2)))) * units.deg
     elif hasattr(c, 'w'):
-        x,y,z = [v.to('kpc').value for v in (c.u,c.v,c.w)]
-        return hp.pixelfunc.vec2pix(nside, x, y, z, nest=nest)
+        x, y, z = [v.to('kpc').value for v in (c.u, c.v, c.w)]
+        lon = np.atleast_1d(np.degrees(np.arctan2(y, x))) * units.deg
+        lat = np.atleast_1d(np.degrees(np.arctan2(z, np.sqrt(x**2 + y**2)))) * units.deg
     else:
         raise dustexceptions.CoordFrameError(
             'No method to transform from coordinate frame "{}" to HEALPix.'.format(
                 frame))
+
+    pix = hp.lonlat_to_healpix(lon, lat)
+    return pix[0] if pix.size == 1 and coords.isscalar else pix
 
 
 def ensure_coord_type(f):

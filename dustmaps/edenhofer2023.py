@@ -165,15 +165,22 @@ def _get_sphere(filepath):
 def _interp_hpxr2lbd(data, radii, nside, nest, lon, lat, dist):
     """Interpolate a 3D map of HEALPix times radii to arbitrary longitude,
     latitude, distance positions."""
-    from healpy.pixelfunc import get_interp_weights
+    import astropy_healpix as _ah
+    import astropy.units as _units
 
     assert lon.shape == lat.shape == dist.shape
     final_shape = data.shape[:-2] + lon.shape
     lon, lat, dist = lon.ravel(), lat.ravel(), dist.ravel()
 
-    idx_pos, wgt_pos = get_interp_weights(
-        nside, lon, lat, nest=nest, lonlat=True
+    order = 'nested' if nest else 'ring'
+    _hp = _ah.HEALPix(nside=nside, order=order)
+    # astropy-healpix returns (pixels, weights), each shape (4, N),
+    # matching healpy.get_interp_weights neighbor selection exactly.
+    idx_pos, wgt_pos = _hp.bilinear_interpolation_weights(
+        lon * _units.deg, lat * _units.deg
     )
+    idx_pos = np.asarray(idx_pos)  # shape (4, N)
+    wgt_pos = np.asarray(wgt_pos)  # shape (4, N)
     idx_r = np.searchsorted(radii, dist)
     idx_l = idx_r - 1
     mask = (idx_l < 0) | (idx_r >= radii.size)
