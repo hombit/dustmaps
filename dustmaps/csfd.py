@@ -55,9 +55,9 @@ class CSFDQuery(HEALPixQuery):
 
         try:
             with fits.open(map_fname) as hdulist:
-                ebv_data = hdulist['xtension'].data[:]['T'].flatten()
+                ebv_data = hdulist['xtension'].data['T'].ravel()
             with fits.open(mask_fname) as hdulist:
-                mask_data = hdulist['xtension'].data[:]['T'].flatten()
+                mask_data = hdulist['xtension'].data['T'].ravel()
         except IOError as error:
             print(dustexceptions.data_missing_message('csfd',
                                                       'CSFD (Chiang 2023)'))

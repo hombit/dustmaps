@@ -29,6 +29,7 @@ import time
 
 from .. import planck
 from ..std_paths import *
+from . import is_mmap
 
 
 class TestPlanck(unittest.TestCase):
@@ -67,6 +68,12 @@ class TestPlanck(unittest.TestCase):
             E = self._planck(c)
 
             np.testing.assert_equal(E.shape, shape)
+
+    def test_mmap(self):
+        """
+        Test that the underlying pixel data is memory-mapped (not copied into RAM).
+        """
+        self.assertTrue(is_mmap(self._planck._pix_val))
 
     def test_frame(self):
         """

@@ -109,6 +109,8 @@ class HEALPixFITSQuery(HEALPixQuery):
             scale (Optional[:obj:`float`]): Scale factor to be multiplied into
                 the data.
         """
+        self._out_dtype = np.dtype(dtype)
+        self._scale = scale
         close_file = False
 
         if isinstance(fname, six.string_types):
@@ -126,17 +128,9 @@ class HEALPixFITSQuery(HEALPixQuery):
                             '`BinTableHDU`.')
 
         if field is None:
-            pix_val = np.array(hdu.data[:].ravel().astype(dtype))
+            pix_val = hdu.data[:].ravel()
         else:
-            pix_val = np.array(hdu.data[field][:].ravel().astype(dtype))
-
-        if scale is not None:
-            names = pix_val.dtype.names
-            if names is None:
-                pix_val *= scale
-            else:
-                for n in names:
-                    pix_val[n] *= scale
+            pix_val = hdu.data[field]
 
         nest = hdu.header.get('ORDERING', 'NESTED').strip() == 'NESTED'
 
@@ -144,3 +138,15 @@ class HEALPixFITSQuery(HEALPixQuery):
             hdulist.close()
 
         super(HEALPixFITSQuery, self).__init__(pix_val, nest, coord_frame)
+
+    def query(self, coords, return_flags=False):
+        result = super(HEALPixFITSQuery, self).query(coords,
+                                                     return_flags=return_flags)
+        if return_flags:
+            sel_pix, flags = result
+        else:
+            sel_pix = result
+        sel_pix = sel_pix.astype(self._out_dtype)
+        if self._scale is not None:
+            sel_pix *= self._scale
+        return (sel_pix, flags) if return_flags else sel_pix
