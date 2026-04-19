@@ -78,7 +78,8 @@ class BayestarQuery(DustMap):
     to three-quarters of the sky.
     """
 
-    def __init__(self, map_fname=None, max_samples=None, version='bayestar2019'):
+    def __init__(self, map_fname=None, max_samples=None, version='bayestar2019',
+                 build_cache=False):
         """
         Args:
             map_fname (Optional[:obj:`str`]): Filename of the Bayestar map. Defaults to
@@ -91,13 +92,64 @@ class BayestarQuery(DustMap):
                 :obj:`'bayestar2017'` (Green, Schlafly, Finkbeiner et al. 2018)
                 and :obj:`'bayestar2015'` (Green, Schlafly, Finkbeiner et al. 2015).
                 Defaults to :obj:`'bayestar2015'`.
+            build_cache (Optional[:obj:`bool`]): If :obj:`True`, decompress the map data
+                into a memory-mappable cache on first load (stored next to the HDF5
+                file as ``<map>.h5.cache/``). Subsequent loads will use the cache
+                automatically regardless of this flag. Defaults to :obj:`False`.
         """
 
         if map_fname is None:
             map_fname = os.path.join(data_dir(), 'bayestar', '{}.h5'.format(version))
 
+        cache_dir = map_fname + '.cache'
+
+        if max_samples is None and self._cache_valid(cache_dir, map_fname):
+            print('Loading Bayestar from mmap cache ...')
+            self._load_from_cache(cache_dir)
+        else:
+            self._load_from_h5(map_fname, max_samples)
+            if max_samples is None and build_cache:
+                print('Saving mmap cache (one-time) ...')
+                self._save_cache(cache_dir)
+
+    def _cache_valid(self, cache_dir, map_fname):
+        sentinel = os.path.join(cache_dir, 'complete')
+        return (os.path.exists(sentinel) and
+                os.path.getmtime(sentinel) >= os.path.getmtime(map_fname))
+
+    def _save_cache(self, cache_dir):
+        os.makedirs(cache_dir, exist_ok=True)
+        np.save(os.path.join(cache_dir, 'samples.npy'), self._samples)
+        np.save(os.path.join(cache_dir, 'best_fit.npy'), self._best_fit)
+        np.save(os.path.join(cache_dir, 'pixel_info.npy'), self._pixel_info)
+        np.save(os.path.join(cache_dir, 'DM_bin_edges.npy'), self._DM_bin_edges)
+        np.save(os.path.join(cache_dir, 'nside_levels.npy'), self._nside_levels)
+        for i, (hp_idx, data_idx) in enumerate(zip(self._hp_idx_sorted, self._data_idx)):
+            np.save(os.path.join(cache_dir, 'hp_idx_sorted_{}.npy'.format(i)), hp_idx)
+            np.save(os.path.join(cache_dir, 'data_idx_{}.npy'.format(i)), data_idx)
+        # Write sentinel last so cache is only marked valid when complete
+        open(os.path.join(cache_dir, 'complete'), 'w').close()
+
+    def _load_from_cache(self, cache_dir):
+        self._samples = np.load(os.path.join(cache_dir, 'samples.npy'), mmap_mode='r')
+        self._best_fit = np.load(os.path.join(cache_dir, 'best_fit.npy'), mmap_mode='r')
+        self._pixel_info = np.load(os.path.join(cache_dir, 'pixel_info.npy'))
+        self._DM_bin_edges = np.load(os.path.join(cache_dir, 'DM_bin_edges.npy'))
+        self._nside_levels = np.load(os.path.join(cache_dir, 'nside_levels.npy'))
+        self._n_distances = len(self._DM_bin_edges)
+        self._n_pix = self._pixel_info.size
+        self._n_samples = self._samples.shape[1]
+        self._hp_idx_sorted = []
+        self._data_idx = []
+        for i in range(len(self._nside_levels)):
+            self._hp_idx_sorted.append(
+                np.load(os.path.join(cache_dir, 'hp_idx_sorted_{}.npy'.format(i))))
+            self._data_idx.append(
+                np.load(os.path.join(cache_dir, 'data_idx_{}.npy'.format(i))))
+
+    def _load_from_h5(self, map_fname, max_samples):
         t_start = time()
-        
+
         with h5py.File(map_fname, 'r') as f:
             # Load pixel information
             print('Loading pixel_info ...')
@@ -105,22 +157,22 @@ class BayestarQuery(DustMap):
             self._DM_bin_edges = f['/pixel_info'].attrs['DM_bin_edges']
             self._n_distances = len(self._DM_bin_edges)
             self._n_pix = self._pixel_info.size
-            
+
             t_pix_info = time()
 
             # Load reddening
             print('Loading samples ...')
-            if max_samples == None:
+            if max_samples is None:
                 self._samples = f['/samples'][:]
             else:
                 self._samples = f['/samples'][:,:max_samples,:]
-            
+
             t_samples = time()
 
             self._n_samples = self._samples.shape[1]
             print('Loading best_fit ...')
             self._best_fit = f['/best_fit'][:]
-            
+
             t_best = time()
 
         # Reshape best fit
@@ -134,11 +186,11 @@ class BayestarQuery(DustMap):
             self._pixel_info[k][idx] = v
 
         t_nan = time()
-        
+
         # Get healpix indices at each nside level
         print('Sorting pixel_info ...')
         sort_idx = np.argsort(self._pixel_info, order=['nside', 'healpix_index'])
-        
+
         t_sort = time()
 
         self._nside_levels = np.unique(self._pixel_info['nside'])
@@ -159,9 +211,9 @@ class BayestarQuery(DustMap):
             self._data_idx.append(idx)
 
             start_idx = end_idx
-        
+
         t_finish = time()
-        
+
         print('t = {:.3f} s'.format(t_finish - t_start))
         print('  pix_info: {: >7.3f} s'.format(t_pix_info-t_start))
         print('   samples: {: >7.3f} s'.format(t_samples-t_pix_info))
